@@ -4,7 +4,7 @@ Avisa cuándo termina la prueba gratuita de una suscripción (Spotify Premium, Y
 
 ## Estado actual
 
-Modelo de suscripciones y persistencia local implementados: las suscripciones de ejemplo se cargan solo la primera vez, se calculan los días restantes y el gasto mensual en riesgo de las pruebas activas. El formulario sigue siendo solo estructura (guardado desde la interfaz: próximamente).
+Modelo de suscripciones y persistencia local implementados: las suscripciones de ejemplo se cargan solo la primera vez, se calculan los días restantes y el gasto mensual en riesgo de las pruebas activas. La pantalla de inicio muestra ese resumen en una tarjeta y las pruebas activas ordenadas por fecha de fin, con su etiqueta de vencimiento y un botón «Ver» que despliega los detalles. El formulario sigue siendo solo estructura (guardado desde la interfaz: próximamente).
 
 ## Cómo abrirlo
 

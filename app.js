@@ -224,6 +224,14 @@ function formatearCOP(valor) {
   }).format(valor);
 }
 
+// Texto corto de vencimiento que se muestra en cada fila de la lista.
+function etiquetaVencimiento(dias) {
+  if (dias === 1) return 'Termina mañana';
+  if (dias === 0) return 'Termina hoy';
+  if (dias < 0) return `Terminó hace ${Math.abs(dias)} días`;
+  return `Termina en ${dias} días`;
+}
+
 function renderizarSuscripciones(suscripciones) {
   const resumen = document.querySelector('.summary');
   const lista = document.querySelector('.trial-list');
@@ -234,45 +242,64 @@ function renderizarSuscripciones(suscripciones) {
   const plural = activas.length === 1 ? 'prueba activa' : 'pruebas activas';
 
   resumen.replaceChildren(
-    crearElemento(
-      'p',
-      `${activas.length} ${plural} · ${formatearCOP(total)} al mes en riesgo`,
-    ),
+    crearElemento('p', 'Gasto mensual en riesgo', 'summary__label'),
+    crearElemento('p', formatearCOP(total), 'summary__amount'),
+    crearElemento('p', `${activas.length} ${plural}`, 'summary__count'),
   );
 
   lista.replaceChildren();
-  if (suscripciones.length === 0) {
-    lista.append(crearElemento('li', 'No hay suscripciones registradas.', 'empty-state'));
+  if (activas.length === 0) {
+    lista.append(crearElemento('li', 'No hay pruebas activas registradas.', 'empty-state'));
     return;
   }
 
-  suscripciones.forEach((suscripcion) => {
-    const item = crearElemento('li', undefined, 'trial-card');
-    const cabecera = crearElemento('div', undefined, 'trial-card__head');
-    cabecera.append(
-      crearElemento('h3', suscripcion.servicio, 'trial-card__title'),
-      crearElemento('span', suscripcion.estado, 'trial-card__status'),
+  // Las fechas AAAA-MM-DD se ordenan correctamente como texto.
+  const ordenadas = activas.slice().sort((a, b) => a.fechaFin.localeCompare(b.fechaFin));
+
+  ordenadas.forEach((suscripcion, indice) => {
+    const item = crearElemento('li', undefined, 'trial-row');
+
+    const info = crearElemento('div', undefined, 'trial-row__info');
+    info.append(
+      crearElemento('h3', suscripcion.servicio, 'trial-row__service'),
+      crearElemento('p', `${formatearCOP(suscripcion.precioMensual)}/mes`, 'trial-row__price'),
+      crearElemento('span', etiquetaVencimiento(diasRestantes(suscripcion)), 'trial-row__label'),
     );
 
-    const dias = diasRestantes(suscripcion);
-    const vencimiento = dias < 0 ? `venció hace ${Math.abs(dias)} días` : `${dias} días restantes`;
-    const detalles = crearElemento(
-      'p',
-      `${formatearCOP(suscripcion.precioMensual)}/mes · ${vencimiento} · Fin: ${suscripcion.fechaFin}`,
-      'trial-card__meta',
-    );
+    const detallesId = `detalles-prueba-${indice}`;
+    const ver = crearElemento('button', 'Ver', 'button button--ver');
+    ver.type = 'button';
+    ver.setAttribute('aria-label', `Ver detalles de ${suscripcion.servicio}`);
+    ver.setAttribute('aria-expanded', 'false');
+    ver.setAttribute('aria-controls', detallesId);
 
-    const beneficios = crearElemento('ul', undefined, 'trial-card__benefits');
+    const detalles = crearElemento('div', undefined, 'trial-row__details');
+    detalles.id = detallesId;
+    detalles.hidden = true;
+
+    const beneficios = crearElemento('ul', undefined, 'trial-row__benefits');
     suscripcion.beneficios.forEach((beneficio) => {
       beneficios.append(crearElemento('li', beneficio));
     });
 
-    const enlace = crearElemento('a', 'Enlace de cancelación', 'trial-card__link');
+    const enlace = crearElemento('a', 'Enlace de cancelación', 'trial-row__link');
     enlace.href = suscripcion.enlaceCancelacion;
     enlace.target = '_blank';
     enlace.rel = 'noopener noreferrer';
 
-    item.append(cabecera, detalles, beneficios, enlace);
+    detalles.append(
+      crearElemento('p', `Fecha de fin: ${suscripcion.fechaFin}`, 'trial-row__meta'),
+      beneficios,
+      enlace,
+    );
+
+    ver.addEventListener('click', () => {
+      const abierto = ver.getAttribute('aria-expanded') === 'true';
+      ver.setAttribute('aria-expanded', String(!abierto));
+      detalles.hidden = abierto;
+    });
+
+    item.append(info, ver, detalles);
     lista.append(item);
   });
 }

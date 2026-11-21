@@ -20,23 +20,26 @@
   </header>
 
   <main class="container main">
-    <section class="section" aria-labelledby="resumen-title">
-      <h1 class="section__title" id="resumen-title">Próximos vencimientos</h1>
-      <p class="section__description">Pruebas activas, días restantes y gasto mensual en riesgo.</p>
+    <section class="section" aria-labelledby="inicio-title">
+      <div class="home-toolbar">
+        <div>
+          <h1 class="section__title" id="inicio-title">Inicio</h1>
+          <p class="section__description">Tus pruebas activas y cuándo terminan.</p>
+        </div>
+        <a class="button button--add" href="#nueva" aria-label="Agregar una prueba">+</a>
+      </div>
+
       <div class="summary" aria-live="polite">
         <p class="empty-state">Todavía no hay pruebas registradas.</p>
       </div>
-    </section>
 
-    <section class="section" aria-labelledby="pruebas-title">
-      <h2 class="section__title" id="pruebas-title">Mis pruebas gratuitas</h2>
-      <p class="section__description">Cada prueba muestra su fecha de fin, sus beneficios y el enlace de cancelación.</p>
-      <ul class="trial-list">
+      <h2 class="section__title section__title--sub" id="pruebas-title">Pruebas por vencer</h2>
+      <ul class="trial-list" aria-labelledby="pruebas-title">
         <li class="empty-state">Cuando añadas una prueba, aparecerá aquí.</li>
       </ul>
     </section>
 
-    <section class="section" aria-labelledby="nueva-title">
+    <section class="section" id="nueva" aria-labelledby="nueva-title">
       <h2 class="section__title" id="nueva-title">Añadir una prueba</h2>
       <p class="section__description">Estructura del formulario. El guardado se implementará en el siguiente paso.</p>
 
