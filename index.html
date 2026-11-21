@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SuscriOFF te recuerda cuándo termina la prueba gratuita de una suscripción y te deja el enlace de cancelación a mano.">
+  <title>SuscriOFF — Controla tus pruebas gratuitas</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <div class="brand">
+        <span class="brand__name">SuscriOFF</span>
+        <span class="brand__tagline">Recuerda cuándo termina tu prueba gratuita</span>
+      </div>
+      <span class="badge">MVP · Sin pagos</span>
+    </div>
+  </header>
+
+  <main class="container main">
+    <section class="section" aria-labelledby="resumen-title">
+      <h1 class="section__title" id="resumen-title">Próximos vencimientos</h1>
+      <p class="section__description">Aquí aparecerán las pruebas que están a punto de terminar y los días que quedan.</p>
+      <div class="summary" aria-live="polite">
+        <p class="empty-state">Todavía no hay pruebas registradas.</p>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="pruebas-title">
+      <h2 class="section__title" id="pruebas-title">Mis pruebas gratuitas</h2>
+      <p class="section__description">Cada prueba mostrará su fecha de fin y su enlace de cancelación.</p>
+      <ul class="trial-list">
+        <li class="empty-state">Cuando añadas una prueba, aparecerá aquí.</li>
+      </ul>
+    </section>
+
+    <section class="section" aria-labelledby="nueva-title">
+      <h2 class="section__title" id="nueva-title">Añadir una prueba</h2>
+      <p class="section__description">Estructura del formulario. El guardado se implementará en el siguiente paso.</p>
+
+      <form class="trial-form" novalidate>
+        <div class="field">
+          <label for="servicio">Servicio</label>
+          <input type="text" id="servicio" name="servicio" placeholder="Ej. Spotify Premium" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="fecha-inicio">Fecha de inicio</label>
+          <input type="date" id="fecha-inicio" name="fecha-inicio">
+        </div>
+
+        <div class="field">
+          <label for="duracion">Duración de la prueba (días)</label>
+          <input type="number" id="duracion" name="duracion" min="1" step="1" placeholder="30">
+        </div>
+
+        <div class="field">
+          <label for="aviso">Avisar con (días de antelación)</label>
+          <input type="number" id="aviso" name="aviso" min="0" step="1" placeholder="3">
+        </div>
+
+        <div class="field field--full">
+          <label for="enlace-cancelacion">Enlace de cancelación</label>
+          <input type="url" id="enlace-cancelacion" name="enlace-cancelacion" placeholder="https://..." autocomplete="off">
+        </div>
+
+        <div class="field field--full">
+          <button class="button" type="button" disabled>Guardar prueba · próximamente</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>SuscriOFF avisa y facilita el enlace, pero nunca cancela por ti. Sin pagos, sin cuentas y sin envío de datos: todo se guarda en este navegador y se usan solo datos ficticios (Ley 1581 de 2012).</p>
+    </div>
+  </footer>
+</body>
+</html>
