@@ -4,7 +4,7 @@ Avisa cuándo termina la prueba gratuita de una suscripción (Spotify Premium, Y
 
 ## Estado actual
 
-Maquetación inicial: HTML, CSS y JavaScript sin lógica todavía. El formulario y las listas son solo estructura; no guardan ni calculan nada.
+Modelo de suscripciones y persistencia local implementados: las suscripciones de ejemplo se cargan solo la primera vez, se calculan los días restantes y el gasto mensual en riesgo de las pruebas activas. El formulario sigue siendo solo estructura (guardado desde la interfaz: próximamente).
 
 ## Cómo abrirlo
 
@@ -14,7 +14,7 @@ Abre `index.html` en el navegador. No hay dependencias, build ni servidor obliga
 
 - `index.html` — estructura de la interfaz.
 - `styles.css` — estilos: azul marino `#0F2A5F` y esquinas rectas.
-- `app.js` — punto de entrada; sin funciones por ahora.
+- `app.js` — modelo, localStorage, cálculos y carga única de datos de ejemplo.
 - [`docs/README-detallado.md`](docs/README-detallado.md) — alcance y decisiones del MVP.
 
 ## Reglas del MVP

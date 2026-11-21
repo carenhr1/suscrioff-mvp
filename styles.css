@@ -103,6 +103,63 @@ body {
   list-style: none;
 }
 
+.summary p {
+  margin: 0;
+  color: var(--ink);
+}
+
+.summary strong {
+  color: var(--navy);
+}
+
+.trial-list {
+  display: grid;
+  gap: 12px;
+}
+
+.trial-card {
+  border: 1px solid var(--border);
+  padding: 16px;
+}
+
+.trial-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.trial-card__title {
+  margin: 0;
+  color: var(--navy);
+  font-size: 1rem;
+}
+
+.trial-card__status {
+  border: 1px solid var(--border-strong);
+  padding: 2px 8px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.trial-card__meta {
+  margin: 8px 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.trial-card__benefits {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  font-size: 0.875rem;
+}
+
+.trial-card__link {
+  color: var(--navy);
+  font-weight: 600;
+}
+
 .empty-state {
   margin: 0;
   border: 1px dashed var(--border-strong);
