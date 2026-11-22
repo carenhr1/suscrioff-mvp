@@ -543,7 +543,49 @@ function guardarAviso() {
   guardarAvisos();
   renderizarCalendario();
   avisoActualId = aviso.id;
+  renderizarConfirmacion();
   mostrarPantalla('confirmacion');
+}
+
+/* ---------- Pantalla 4: recordatorio creado ---------- */
+
+function buscarAviso(id) {
+  return avisos.find((aviso) => aviso.id === id) || null;
+}
+
+// Google Calendar espera fechas tipo 20261125T090000 en hora local.
+function fechaHoraGoogle(iso, hora, minuto) {
+  const fecha = iso.replace(/-/g, '');
+  return `${fecha}T${String(hora).padStart(2, '0')}${String(minuto).padStart(2, '0')}00`;
+}
+
+function renderizarConfirmacion() {
+  const aviso = buscarAviso(avisoActualId);
+  if (!aviso) return;
+  const prueba = buscarPrueba(aviso.pruebaId);
+
+  document.getElementById('confirm-fecha').textContent =
+    `Te avisaremos el ${formatearFecha(aviso.fechaAviso)} a las ${HORA_AVISO}.`;
+  document.getElementById('event-servicio').textContent =
+    `${aviso.servicio} · ${formatearFecha(aviso.fechaFin)}`;
+  document.getElementById('event-nombre').textContent =
+    `Evento: "Cancelar ${aviso.servicio}"`;
+
+  const inicio = fechaHoraGoogle(aviso.fechaAviso, 9, 0);
+  const fin = fechaHoraGoogle(aviso.fechaAviso, 9, 30);
+  let detalles = `Cancela ${aviso.servicio} antes del ${formatearFecha(aviso.fechaFin)}.`;
+  if (prueba && prueba.enlaceCancelacion) {
+    detalles += ` Enlace de cancelación: ${prueba.enlaceCancelacion}`;
+  }
+
+  const parametros = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: `Cancelar ${aviso.servicio}`,
+    dates: `${inicio}/${fin}`,
+    details: detalles,
+  });
+  document.getElementById('btn-calendar').href =
+    `https://calendar.google.com/calendar/render?${parametros.toString()}`;
 }
 
 /* ---------- Eventos y arranque ---------- */

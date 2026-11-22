@@ -123,7 +123,30 @@
     </section>
 
     <!-- Pantalla 4: Recordatorio creado -->
-    <section id="screen-confirmacion" class="screen" aria-labelledby="titulo-confirmacion" hidden></section>
+    <section id="screen-confirmacion" class="screen" aria-labelledby="titulo-confirmacion" hidden>
+      <header class="screen-header">
+        <span class="screen-number" aria-hidden="true">4</span>
+        <h1 class="screen-title" id="titulo-confirmacion">Recordatorio creado</h1>
+      </header>
+      <div class="screen-body">
+        <div class="check-square" aria-hidden="true">✓</div>
+        <h2 class="confirm-title">¡Listo! No se te olvidará</h2>
+        <p class="confirm-sub" id="confirm-fecha">Te avisaremos el 25/11/2026 a las 9:00 a. m.</p>
+
+        <div class="event-card">
+          <p class="event-card__title" id="event-servicio">YouTube Premium · 27/11/2026</p>
+          <p id="event-nombre">Evento: &quot;Cancelar YouTube Premium&quot;</p>
+          <p>Enlace de cancelación incluido</p>
+        </div>
+
+        <div class="confirm-actions">
+          <a id="btn-calendar" class="button button--wide" href="#" target="_blank" rel="noopener">Abrir en Google Calendar</a>
+          <button class="button button--secondary button--wide" type="button" data-destino="inicio">Volver al inicio</button>
+        </div>
+
+        <div class="wallet-placeholder" aria-disabled="true">Pase de Wallet · próxima versión</div>
+      </div>
+    </section>
 
     <!-- Calendario: lista sencilla de avisos creados -->
     <section id="screen-calendario" class="screen" aria-labelledby="titulo-calendario" hidden>
