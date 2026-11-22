@@ -8,7 +8,7 @@
 const STORAGE_KEY = 'suscrioff.pruebas.v1';
 const AVISOS_KEY = 'suscrioff.avisos.v1';
 const DIAS_ANTES = 2;
-const HORA_AVISO = '9:00 a. m.';
+const HORA_AVISO = '9:00 a. m';
 
 let pruebas = [];
 let avisos = [];
@@ -225,6 +225,8 @@ const PANTALLAS = ['inicio', 'nueva', 'detalle', 'confirmacion', 'calendario'];
 
 function mostrarPantalla(nombre) {
   if (!PANTALLAS.includes(nombre)) return;
+  // Al volver al inicio se refresca el resumen por si cambió una prueba.
+  if (nombre === 'inicio') renderizarInicio();
   PANTALLAS.forEach((id) => {
     const section = document.getElementById(`screen-${id}`);
     if (section) section.hidden = id !== nombre;

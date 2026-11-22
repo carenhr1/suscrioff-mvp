@@ -4,17 +4,17 @@ Avisa cuándo termina la prueba gratuita de una suscripción (Spotify Premium, Y
 
 ## Estado actual
 
-Modelo de suscripciones y persistencia local implementados: las suscripciones de ejemplo se cargan solo la primera vez, se calculan los días restantes y el gasto mensual en riesgo de las pruebas activas. La pantalla de inicio muestra ese resumen en una tarjeta y las pruebas activas ordenadas por fecha de fin, con su etiqueta de vencimiento y un botón «Ver» que despliega los detalles. El formulario sigue siendo solo estructura (guardado desde la interfaz: próximamente).
+Aplicación completa de cuatro pantallas: inicio con gasto en riesgo y próximos vencimientos, alta de pruebas mediante escaneo de texto con regex y campos editables, detalle con cuenta regresiva e interruptor de aviso, y confirmación del recordatorio con enlace de plantilla a Google Calendar. Todo se guarda en `localStorage` y se usa una paleta monocromática azul marino.
 
 ## Cómo abrirlo
 
-Abre `index.html` en el navegador. No hay dependencias, build ni servidor obligatorio.
+Abre `index.html` en el navegador o levant un servidor local con `python3 -m http.server 8000` y entra en `http://localhost:8000`. No hay dependencias ni build.
 
 ## Archivos
 
 - `index.html` — estructura de la interfaz.
-- `styles.css` — estilos: azul marino `#0F2A5F` y esquinas rectas.
-- `app.js` — modelo, localStorage, cálculos y carga única de datos de ejemplo.
+- `styles.css` — estilos: azul marino `#12295E` y esquinas cuadradas (radio máx. 2px).
+- `app.js` — modelo, navegación, localStorage, cálculos y carga única de datos de ejemplo.
 - [`docs/README-detallado.md`](docs/README-detallado.md) — alcance y decisiones del MVP.
 
 ## Reglas del MVP
