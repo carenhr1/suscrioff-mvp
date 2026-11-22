@@ -454,12 +454,105 @@ function guardarNuevaPrueba() {
   abrirDetalle(prueba.id);
 }
 
+/* ---------- Pantalla 3: detalle ---------- */
+
+function fechaAviso(prueba) {
+  return sumarDias(prueba.fechaFin, -DIAS_ANTES);
+}
+
+function renderizarDetalle() {
+  const prueba = buscarPrueba(pruebaActualId);
+  if (!prueba) return;
+
+  document.getElementById('titulo-detalle').textContent = prueba.servicio;
+  const dias = díasRestantes(prueba.fechaFin);
+  document.getElementById('dias-quedan').textContent =
+    dias < 0 ? 'Vencida' : dias === 0 ? 'Hoy' : `${dias} ${dias === 1 ? 'día' : 'días'}`;
+  document.getElementById('fecha-fin-detalle').textContent =
+    `Fin de la prueba: ${formatearFecha(prueba.fechaFin)}`;
+  document.getElementById('fecha-aviso-detalle').textContent =
+    `en Google Calendar (${formatearFecha(fechaAviso(prueba))})`;
+
+  const beneficios = document.getElementById('beneficios-detalle');
+  beneficios.replaceChildren();
+  const lista = prueba.beneficios.concat(
+    `Después: ${formatearPeso(prueba.precioMensual)} al mes`,
+  );
+  lista.forEach((texto) => {
+    const li = document.createElement('li');
+    li.textContent = texto;
+    beneficios.append(li);
+  });
+
+  document.getElementById('toggle-aviso').setAttribute('aria-checked', String(prueba.avisoActivo));
+
+  const botonCancelar = document.getElementById('btn-cancelar-ahora');
+  const mensaje = document.getElementById('mensaje-detalle');
+  botonCancelar.disabled = !prueba.enlaceCancelacion;
+  mensaje.hidden = Boolean(prueba.enlaceCancelacion);
+  mensaje.textContent = 'Esta prueba no tiene enlace de cancelación.';
+}
+
+function alternarAviso() {
+  const prueba = buscarPrueba(pruebaActualId);
+  if (!prueba) return;
+  prueba.avisoActivo = !prueba.avisoActivo;
+  guardarPruebas();
+  document.getElementById('toggle-aviso').setAttribute('aria-checked', String(prueba.avisoActivo));
+  document.getElementById('mensaje-detalle').hidden = true;
+}
+
+function abrirEnlaceCancelacion() {
+  const prueba = buscarPrueba(pruebaActualId);
+  if (!prueba || !prueba.enlaceCancelacion) return;
+  const enlace = document.createElement('a');
+  enlace.href = prueba.enlaceCancelacion;
+  enlace.target = '_blank';
+  enlace.rel = 'noopener';
+  enlace.click();
+}
+
+function marcarCancelada() {
+  const prueba = buscarPrueba(pruebaActualId);
+  if (!prueba) return;
+  prueba.estado = 'cancelada';
+  guardarPruebas();
+  renderizarInicio();
+  mostrarPantalla('inicio');
+}
+
+function guardarAviso() {
+  const prueba = buscarPrueba(pruebaActualId);
+  if (!prueba) return;
+  if (!prueba.avisoActivo) {
+    const mensaje = document.getElementById('mensaje-detalle');
+    mensaje.textContent = 'Activa el aviso para guardarlo.';
+    mensaje.hidden = false;
+    return;
+  }
+
+  const aviso = {
+    id: nuevoId(),
+    pruebaId: prueba.id,
+    servicio: prueba.servicio,
+    fechaFin: prueba.fechaFin,
+    fechaAviso: fechaAviso(prueba),
+  };
+  avisos = avisos.filter((item) => item.pruebaId !== prueba.id);
+  avisos.push(aviso);
+  guardarAvisos();
+  renderizarCalendario();
+  avisoActualId = aviso.id;
+  mostrarPantalla('confirmacion');
+}
+
 /* ---------- Eventos y arranque ---------- */
 
 function abrirDetalle(id) {
   const prueba = buscarPrueba(id);
   if (!prueba) return;
   pruebaActualId = id;
+  renderizarDetalle();
   mostrarPantalla('detalle');
 }
 
@@ -473,6 +566,10 @@ function iniciar() {
   document.getElementById('btn-editar').addEventListener('click', () => habilitarCampos(true, true));
   document.getElementById('btn-guardar').addEventListener('click', guardarNuevaPrueba);
   document.getElementById('formulario-nueva').addEventListener('submit', (evento) => evento.preventDefault());
+  document.getElementById('toggle-aviso').addEventListener('click', alternarAviso);
+  document.getElementById('btn-guardar-aviso').addEventListener('click', guardarAviso);
+  document.getElementById('btn-cancelar-ahora').addEventListener('click', abrirEnlaceCancelacion);
+  document.getElementById('btn-marcar-cancelada').addEventListener('click', marcarCancelada);
 
   document.addEventListener('click', (evento) => {
     const destino = evento.target.closest('[data-destino]');

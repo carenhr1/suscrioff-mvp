@@ -280,6 +280,137 @@ button:disabled {
   font-size: 14px;
 }
 
+/* Pantalla 3 — detalle */
+.countdown-card {
+  padding: 18px 16px;
+  background: var(--navy);
+  color: var(--white);
+}
+
+.countdown-card__label {
+  margin: 0;
+  color: var(--on-navy);
+  font-size: 12px;
+}
+
+.countdown-card__value {
+  margin: 6px 0 10px;
+  color: var(--white);
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.countdown-card__date {
+  margin: 0;
+  color: var(--on-navy);
+  font-size: 12px;
+}
+
+.benefit-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.benefit-list li {
+  position: relative;
+  padding-left: 18px;
+  color: var(--navy);
+  font-size: 14px;
+}
+
+.benefit-list li::before {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  background: var(--navy);
+  content: '';
+}
+
+.reminder-card {
+  padding: 14px;
+  border: 1px solid var(--border);
+}
+
+.reminder-card__title {
+  margin: 0;
+  color: var(--navy);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.reminder-card__sub {
+  margin: 4px 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.reminder-card__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.switch {
+  position: relative;
+  width: 42px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid var(--navy);
+  background: var(--field);
+}
+
+.switch[aria-checked='true'] {
+  background: var(--navy);
+}
+
+.switch__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: var(--white);
+  transition: left 0.12s linear;
+}
+
+.switch[aria-checked='true'] .switch__knob {
+  left: 22px;
+}
+
+.save-notice {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.detail-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.back-link {
+  display: block;
+  margin: 22px auto 0;
+  padding: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  text-decoration: underline;
+}
+
 /* Pantalla 2 — escaneo y campos */
 .block-label {
   display: block;

@@ -83,7 +83,44 @@
     </section>
 
     <!-- Pantalla 3: Detalle -->
-    <section id="screen-detalle" class="screen" aria-labelledby="titulo-detalle" hidden></section>
+    <section id="screen-detalle" class="screen" aria-labelledby="titulo-detalle" hidden>
+      <header class="screen-header">
+        <span class="screen-number" aria-hidden="true">3</span>
+        <h1 class="screen-title" id="titulo-detalle">Detalle</h1>
+      </header>
+      <div class="screen-body">
+        <div class="countdown-card">
+          <p class="countdown-card__label">Quedan</p>
+          <p class="countdown-card__value" id="dias-quedan">0 días</p>
+          <p class="countdown-card__date" id="fecha-fin-detalle">Fin de la prueba:</p>
+        </div>
+
+        <h2 class="section-title">Beneficios de la prueba</h2>
+        <ul class="benefit-list" id="beneficios-detalle"></ul>
+
+        <h2 class="section-title">Recordatorio</h2>
+        <div class="reminder-card">
+          <p class="reminder-card__title">Avisarme 2 días antes</p>
+          <p class="reminder-card__sub" id="fecha-aviso-detalle">en Google Calendar</p>
+          <div class="reminder-card__controls">
+            <button id="toggle-aviso" class="switch" type="button" role="switch" aria-checked="false" aria-label="Avisarme 2 días antes">
+              <span class="switch__knob" aria-hidden="true"></span>
+            </button>
+            <button id="btn-guardar-aviso" class="save-notice" type="button">
+              Guardar aviso <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button id="btn-cancelar-ahora" class="button button--wide" type="button">Cancelar ahora (enlace)</button>
+          <button id="btn-marcar-cancelada" class="button button--secondary button--wide" type="button">Marcar como cancelada</button>
+        </div>
+        <p id="mensaje-detalle" class="scan-message" role="status" hidden></p>
+
+        <button class="back-link" type="button" data-destino="inicio">← Volver a Mis pruebas</button>
+      </div>
+    </section>
 
     <!-- Pantalla 4: Recordatorio creado -->
     <section id="screen-confirmacion" class="screen" aria-labelledby="titulo-confirmacion" hidden></section>
