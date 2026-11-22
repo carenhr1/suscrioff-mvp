@@ -91,7 +91,8 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
-.header-add {
+.header-add,
+.header-close {
   flex: 0 0 32px;
   width: 32px;
   height: 32px;

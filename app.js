@@ -393,6 +393,31 @@ function habilitarCampos(habilitados, enfocar) {
   if (enfocar && habilitados) campos.servicio.focus();
 }
 
+function limpiarFormulario() {
+  const campos = camposFormulario();
+  campos.texto.value = '';
+  [campos.servicio, campos.fecha, campos.precio, campos.enlace].forEach((campo) => {
+    campo.value = '';
+    campo.disabled = true;
+  });
+  campos.mensaje.textContent = '';
+  campos.mensaje.hidden = true;
+  campos.error.textContent = '';
+  campos.error.hidden = true;
+}
+
+function hayCambiosSinGuardar() {
+  const campos = camposFormulario();
+  return [campos.texto, campos.servicio, campos.fecha, campos.precio, campos.enlace]
+    .some((campo) => campo.value.trim() !== '');
+}
+
+function cerrarFormulario() {
+  if (hayCambiosSinGuardar() && !window.confirm('¿Descartar los cambios?')) return;
+  limpiarFormulario();
+  mostrarPantalla('inicio');
+}
+
 function escanearTexto() {
   const campos = camposFormulario();
   const detectado = detectarDatos(campos.texto.value);
@@ -446,13 +471,7 @@ function guardarNuevaPrueba() {
   pruebas.push(prueba);
   guardarPruebas();
 
-  campos.texto.value = '';
-  [campos.servicio, campos.fecha, campos.precio, campos.enlace].forEach((campo) => {
-    campo.value = '';
-    campo.disabled = true;
-  });
-  campos.error.hidden = true;
-  campos.mensaje.hidden = true;
+  limpiarFormulario();
   abrirDetalle(prueba.id);
 }
 
@@ -606,6 +625,8 @@ function iniciar() {
   renderizarCalendario();
 
   document.getElementById('btn-agregar').addEventListener('click', () => mostrarPantalla('nueva'));
+  document.getElementById('btn-cerrar-nueva').addEventListener('click', cerrarFormulario);
+  document.getElementById('btn-volver-nueva').addEventListener('click', cerrarFormulario);
   document.getElementById('btn-escanear').addEventListener('click', escanearTexto);
   document.getElementById('btn-editar').addEventListener('click', () => habilitarCampos(true, true));
   document.getElementById('btn-guardar').addEventListener('click', guardarNuevaPrueba);
@@ -623,6 +644,12 @@ function iniciar() {
     }
     const abrir = evento.target.closest('[data-abrir]');
     if (abrir) abrirDetalle(abrir.dataset.abrir);
+  });
+
+  document.addEventListener('keydown', (evento) => {
+    if (evento.key === 'Escape' && !document.getElementById('screen-nueva').hidden) {
+      cerrarFormulario();
+    }
   });
 }
 
