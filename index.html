@@ -9,77 +9,58 @@
   <script src="app.js" defer></script>
 </head>
 <body>
-  <header class="site-header">
-    <div class="container site-header__inner">
-      <div class="brand">
-        <span class="brand__name">SuscriOFF</span>
-        <span class="brand__tagline">Recuerda cuándo termina tu prueba gratuita</span>
-      </div>
-      <span class="badge">MVP · Sin pagos</span>
-    </div>
-  </header>
+  <div class="app-frame">
 
-  <main class="container main">
-    <section class="section" aria-labelledby="inicio-title">
-      <div class="home-toolbar">
-        <div>
-          <h1 class="section__title" id="inicio-title">Inicio</h1>
-          <p class="section__description">Tus pruebas activas y cuándo terminan.</p>
+    <!-- Pantalla 1: Inicio -->
+    <section id="screen-inicio" class="screen screen--inicio" aria-labelledby="titulo-inicio">
+      <header class="screen-header">
+        <span class="screen-number" aria-hidden="true">1</span>
+        <h1 class="screen-title" id="titulo-inicio">SuscriOFF</h1>
+        <button id="btn-agregar" class="header-add" type="button" aria-label="Agregar nueva prueba">+</button>
+      </header>
+
+      <div class="screen-body">
+        <div class="summary-card" aria-live="polite">
+          <p class="summary-card__label">Gasto mensual en riesgo</p>
+          <p class="summary-card__amount" id="gasto-total">$ 0 COP</p>
+          <p class="summary-card__count" id="gasto-count">0 pruebas gratuitas activas</p>
         </div>
-        <a class="button button--add" href="#nueva" aria-label="Agregar una prueba">+</a>
+
+        <h2 class="section-title">Próximos vencimientos</h2>
+        <ul id="lista-pruebas" class="trial-list" aria-label="Próximos vencimientos"></ul>
       </div>
 
-      <div class="summary" aria-live="polite">
-        <p class="empty-state">Todavía no hay pruebas registradas.</p>
-      </div>
-
-      <h2 class="section__title section__title--sub" id="pruebas-title">Pruebas por vencer</h2>
-      <ul class="trial-list" aria-labelledby="pruebas-title">
-        <li class="empty-state">Cuando añadas una prueba, aparecerá aquí.</li>
-      </ul>
+      <nav class="bottom-nav" aria-label="Navegación principal">
+        <button class="nav-item is-active" type="button" data-destino="inicio">Inicio</button>
+        <button class="nav-item" type="button" data-destino="nueva">Agregar</button>
+        <button class="nav-item" type="button" data-destino="calendario">Calendario</button>
+      </nav>
     </section>
 
-    <section class="section" id="nueva" aria-labelledby="nueva-title">
-      <h2 class="section__title" id="nueva-title">Añadir una prueba</h2>
-      <p class="section__description">Estructura del formulario. El guardado se implementará en el siguiente paso.</p>
+    <!-- Pantalla 2: Nueva prueba gratuita -->
+    <section id="screen-nueva" class="screen" aria-labelledby="titulo-nueva" hidden></section>
 
-      <form class="trial-form" novalidate>
-        <div class="field">
-          <label for="servicio">Servicio</label>
-          <input type="text" id="servicio" name="servicio" placeholder="Ej. Spotify Premium" autocomplete="off">
-        </div>
+    <!-- Pantalla 3: Detalle -->
+    <section id="screen-detalle" class="screen" aria-labelledby="titulo-detalle" hidden></section>
 
-        <div class="field">
-          <label for="fecha-inicio">Fecha de inicio</label>
-          <input type="date" id="fecha-inicio" name="fecha-inicio">
-        </div>
+    <!-- Pantalla 4: Recordatorio creado -->
+    <section id="screen-confirmacion" class="screen" aria-labelledby="titulo-confirmacion" hidden></section>
 
-        <div class="field">
-          <label for="duracion">Duración de la prueba (días)</label>
-          <input type="number" id="duracion" name="duracion" min="1" step="1" placeholder="30">
-        </div>
-
-        <div class="field">
-          <label for="aviso">Avisar con (días de antelación)</label>
-          <input type="number" id="aviso" name="aviso" min="0" step="1" placeholder="3">
-        </div>
-
-        <div class="field field--full">
-          <label for="enlace-cancelacion">Enlace de cancelación</label>
-          <input type="url" id="enlace-cancelacion" name="enlace-cancelacion" placeholder="https://..." autocomplete="off">
-        </div>
-
-        <div class="field field--full">
-          <button class="button" type="button" disabled>Guardar prueba · próximamente</button>
-        </div>
-      </form>
+    <!-- Calendario: lista sencilla de avisos creados -->
+    <section id="screen-calendario" class="screen" aria-labelledby="titulo-calendario" hidden>
+      <header class="screen-header">
+        <span class="screen-number" aria-hidden="true">C</span>
+        <h1 class="screen-title" id="titulo-calendario">Calendario</h1>
+      </header>
+      <div class="screen-body">
+        <h2 class="section-title">Avisos creados</h2>
+        <ul id="lista-avisos" class="notice-list"></ul>
+      </div>
+      <div class="screen-footer">
+        <button class="button button--secondary button--wide" type="button" data-destino="inicio">Volver al inicio</button>
+      </div>
     </section>
-  </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <p>SuscriOFF avisa y facilita el enlace, pero nunca cancela por ti. Sin pagos, sin cuentas y sin envío de datos: todo se guarda en este navegador y se usan solo datos ficticios (Ley 1581 de 2012).</p>
-    </div>
-  </footer>
+  </div>
 </body>
 </html>

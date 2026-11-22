@@ -1,327 +1,372 @@
 /*
- * SuscriOFF — modelo de datos y persistencia local de suscripciones.
- *
- * Responsabilidades:
- * - Normalizar/validar el modelo de una suscripción.
- * - Guardar y cargar las suscripciones en localStorage (solo datos ficticios).
- * - Calcular días restantes hasta la fecha de fin.
- * - Sumar el gasto mensual en riesgo de las pruebas activas.
- * - Cargar las suscripciones de ejemplo solo la primera vez que se abre la app.
+ * SuscriOFF — datos, cálculos y navegación de la app (HTML, CSS y JS puros).
+ * Todo se guarda en localStorage; no hay backend, pagos ni envío de datos.
  */
 
 'use strict';
 
-const STORAGE_KEY = 'suscrioff.suscripciones.v1';
+const STORAGE_KEY = 'suscrioff.pruebas.v1';
+const AVISOS_KEY = 'suscrioff.avisos.v1';
+const DIAS_ANTES = 2;
+const HORA_AVISO = '9:00 a. m.';
 
-const ESTADOS = Object.freeze({
-  ACTIVA: 'activa',
-  CANCELADA: 'cancelada',
-});
+let pruebas = [];
+let avisos = [];
+let pruebaActualId = null;
+let avisoActualId = null;
 
-/*
- * Modelo de una suscripción:
- * {
- *   servicio: string,          // Ej. "Spotify Premium"
- *   precioMensual: number,     // Valor en COP
- *   fechaFin: string,          // AAAA-MM-DD
- *   enlaceCancelacion: string, // URL ficticia para cancelar
- *   beneficios: string[],      // Lista de beneficios de la prueba
- *   estado: 'activa' | 'cancelada'
- * }
- */
-
-const SUSCRIPCIONES_EJEMPLO = [
-  {
-    servicio: 'Spotify Premium',
-    precioMensual: 16900,
-    fechaFin: '2026-11-24',
-    enlaceCancelacion: 'https://spotify.example/cancelar',
-    beneficios: ['Música sin anuncios', 'Descargas sin conexión', 'Calidad de audio alta'],
-    estado: ESTADOS.ACTIVA,
-  },
-  {
-    servicio: 'YouTube Premium',
-    precioMensual: 21900,
-    fechaFin: '2026-11-28',
-    enlaceCancelacion: 'https://youtube.example/cancelar',
-    beneficios: ['Videos sin anuncios', 'YouTube Music incluido', 'Descargas offline'],
-    estado: ESTADOS.ACTIVA,
-  },
-  {
-    servicio: 'Amazon Prime',
-    precioMensual: 17900,
-    fechaFin: '2026-12-05',
-    enlaceCancelacion: 'https://amazon.example/cancelar',
-    beneficios: ['Envíos gratis', 'Prime Video', 'Ofertas exclusivas'],
-    estado: ESTADOS.ACTIVA,
-  },
+/* Servicios reconocidos al escanear texto (nombre canónico y enlace ficticio). */
+const SERVICIOS_CONOCIDOS = [
+  { patron: /spotify/i, nombre: 'Spotify Premium', enlace: 'https://spotify.example/cancelar' },
+  { patron: /youtube/i, nombre: 'YouTube Premium', enlace: 'https://youtube.example/cancelar' },
+  { patron: /amazon|prime video/i, nombre: 'Amazon Prime', enlace: 'https://amazon.example/cancelar' },
+  { patron: /netflix/i, nombre: 'Netflix', enlace: 'https://netflix.example/cancelar' },
+  { patron: /disney/i, nombre: 'Disney+', enlace: 'https://disney.example/cancelar' },
+  { patron: /apple music|apple tv/i, nombre: 'Apple Music', enlace: 'https://apple.example/cancelar' },
 ];
 
-/* ---------- Validación y modelo ---------- */
+const BENEFICIOS_POR_DEFECTO = [
+  'Acceso a la prueba gratuita',
+  'Sin cargos durante la prueba',
+];
 
-function textoObligatorio(valor, nombreCampo) {
-  if (typeof valor !== 'string' || valor.trim() === '') {
-    throw new TypeError(`${nombreCampo} debe ser un texto no vacío.`);
-  }
-  return valor.trim();
+/* ---------- Fechas y formatos ---------- */
+
+function fechaDeHoy() {
+  const hoy = new Date();
+  return new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
 }
 
-function precioValido(valor) {
-  const precio = Number(valor);
-  if (!Number.isFinite(precio) || precio < 0) {
-    throw new TypeError('precioMensual debe ser un número mayor o igual a cero.');
-  }
-  return Math.round(precio * 100) / 100;
+function aISO(fecha) {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${anio}-${mes}-${dia}`;
 }
 
-function fechaFinValida(valor) {
-  if (typeof valor !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
-    throw new TypeError('fechaFin debe tener el formato AAAA-MM-DD.');
-  }
-
-  const [anio, mes, dia] = valor.split('-').map(Number);
-  const fecha = new Date(Date.UTC(anio, mes - 1, dia));
-  const esFechaReal =
-    fecha.getUTCFullYear() === anio &&
-    fecha.getUTCMonth() === mes - 1 &&
-    fecha.getUTCDate() === dia;
-
-  if (!esFechaReal) {
-    throw new TypeError('fechaFin no es una fecha válida.');
-  }
-  return valor;
+function deISO(iso) {
+  const [anio, mes, dia] = iso.split('-').map(Number);
+  return new Date(anio, mes - 1, dia);
 }
 
-function beneficiosValidos(valor) {
-  if (!Array.isArray(valor)) {
-    throw new TypeError('beneficios debe ser una lista de textos.');
-  }
-  return valor
-    .filter((beneficio) => typeof beneficio === 'string' && beneficio.trim() !== '')
-    .map((beneficio) => beneficio.trim());
+function sumarDias(iso, cantidad) {
+  const fecha = deISO(iso);
+  fecha.setDate(fecha.getDate() + cantidad);
+  return aISO(fecha);
 }
 
-function estadoValido(valor) {
-  if (!Object.values(ESTADOS).includes(valor)) {
-    throw new TypeError(`estado debe ser "${ESTADOS.ACTIVA}" o "${ESTADOS.CANCELADA}".`);
-  }
-  return valor;
+function díasRestantes(iso) {
+  const fin = deISO(iso).getTime();
+  const hoy = fechaDeHoy().getTime();
+  return Math.round((fin - hoy) / 86400000);
 }
 
-function normalizarSuscripcion(datos) {
-  if (datos === null || typeof datos !== 'object' || Array.isArray(datos)) {
-    throw new TypeError('La suscripción debe ser un objeto.');
+function formatearFecha(iso) {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return '';
+  const [anio, mes, dia] = iso.split('-');
+  return `${dia}/${mes}/${anio}`;
+}
+
+function fechaDesdeTexto(texto) {
+  const coincidencia = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(texto.trim());
+  if (!coincidencia) return '';
+  const [, dia, mes, anio] = coincidencia.map(Number);
+  const fecha = new Date(anio, mes - 1, dia);
+  if (fecha.getFullYear() !== anio || fecha.getMonth() !== mes - 1 || fecha.getDate() !== dia) {
+    return '';
+  }
+  return aISO(fecha);
+}
+
+function formatearPeso(valor) {
+  const numero = Number(valor) || 0;
+  return `$ ${numero.toLocaleString('es-CO')}`;
+}
+
+/* ---------- Modelo y persistencia ---------- */
+
+function nuevoId() {
+  if (globalThis.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function normalizarPrueba(datos) {
+  if (!datos || typeof datos !== 'object' || Array.isArray(datos)) {
+    throw new TypeError('La prueba debe ser un objeto.');
+  }
+  const nombre = typeof datos.servicio === 'string' ? datos.servicio.trim() : '';
+  if (!nombre) throw new TypeError('El servicio es obligatorio.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(datos.fechaFin || '')) {
+    throw new TypeError('La fecha de fin debe tener formato AAAA-MM-DD.');
   }
 
   return {
-    servicio: textoObligatorio(datos.servicio, 'servicio'),
-    precioMensual: precioValido(datos.precioMensual),
-    fechaFin: fechaFinValida(datos.fechaFin),
-    enlaceCancelacion: textoObligatorio(datos.enlaceCancelacion, 'enlaceCancelacion'),
-    beneficios: beneficiosValidos(datos.beneficios === undefined ? [] : datos.beneficios),
-    estado: estadoValido(datos.estado),
+    id: datos.id || nuevoId(),
+    servicio: nombre,
+    precioMensual: Math.max(0, Math.round(Number(datos.precioMensual) || 0)),
+    fechaFin: datos.fechaFin,
+    enlaceCancelacion: typeof datos.enlaceCancelacion === 'string' ? datos.enlaceCancelacion.trim() : '',
+    beneficios: Array.isArray(datos.beneficios) && datos.beneficios.length
+      ? datos.beneficios.filter(Boolean)
+      : BENEFICIOS_POR_DEFECTO.slice(),
+    estado: datos.estado === 'cancelada' ? 'cancelada' : 'activa',
+    avisoActivo: Boolean(datos.avisoActivo),
   };
 }
 
-function crearSuscripcion(datos) {
-  return normalizarSuscripcion(datos);
-}
-
-/* ---------- Persistencia en localStorage ---------- */
-
-function leerAlmacen() {
+function leerClave(clave) {
   try {
-    return globalThis.localStorage.getItem(STORAGE_KEY);
+    return localStorage.getItem(clave);
   } catch (error) {
-    console.warn('No se pudo acceder a localStorage.', error);
+    console.warn('No se pudo leer localStorage.', error);
     return null;
   }
 }
 
-function guardarSuscripciones(suscripciones) {
-  if (!Array.isArray(suscripciones)) {
-    throw new TypeError('guardarSuscripciones espera una lista de suscripciones.');
-  }
-
-  const normalizadas = suscripciones.map(normalizarSuscripcion);
+function escribirClave(clave, valor) {
   try {
-    globalThis.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizadas));
-    return true;
+    localStorage.setItem(clave, JSON.stringify(valor));
   } catch (error) {
-    console.warn('No se pudieron guardar las suscripciones.', error);
-    return false;
+    console.warn('No se pudo guardar en localStorage.', error);
   }
 }
 
-function cargarSuscripciones() {
-  const crudo = leerAlmacen();
-  if (crudo === null) return [];
-
+function cargarPruebas() {
+  const crudo = leerClave(STORAGE_KEY);
+  if (crudo === null) return null;
   try {
     const datos = JSON.parse(crudo);
     if (!Array.isArray(datos)) return [];
-    return datos.flatMap((suscripcion) => {
+    return datos.flatMap((item) => {
       try {
-        return [normalizarSuscripcion(suscripcion)];
+        return [normalizarPrueba(item)];
       } catch (error) {
-        console.warn('Se ignoró una suscripción guardada con datos inválidos.', error);
+        console.warn('Se ignoró una prueba guardada con datos inválidos.', error);
         return [];
       }
     });
   } catch (error) {
-    console.warn('No se pudieron leer las suscripciones guardadas.', error);
+    console.warn('No se pudieron leer las pruebas guardadas.', error);
     return [];
   }
 }
 
-// Siembra los datos ficticios únicamente cuando aún no existe información guardada.
-function cargarSuscripcionesIniciales() {
-  if (leerAlmacen() !== null) {
-    return cargarSuscripciones();
+function guardarPruebas() {
+  escribirClave(STORAGE_KEY, pruebas);
+}
+
+function cargarAvisos() {
+  const crudo = leerClave(AVISOS_KEY);
+  if (!crudo) return [];
+  try {
+    const datos = JSON.parse(crudo);
+    return Array.isArray(datos) ? datos : [];
+  } catch (error) {
+    console.warn('No se pudieron leer los avisos guardados.', error);
+    return [];
   }
-
-  guardarSuscripciones(SUSCRIPCIONES_EJEMPLO);
-  return SUSCRIPCIONES_EJEMPLO.map(normalizarSuscripcion);
 }
 
-/* ---------- Cálculos ---------- */
-
-// Devuelve días enteros: positivos si faltan, 0 si vence hoy, negativos si ya venció.
-function diasRestantes(suscripcion, hoy = new Date()) {
-  const fechaFin = typeof suscripcion === 'string' ? suscripcion : suscripcion.fechaFin;
-  fechaFinValida(fechaFin);
-
-  const fin = Date.parse(`${fechaFin}T00:00:00Z`);
-  const inicio = Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
-  return Math.round((fin - inicio) / 86400000);
+function guardarAvisos() {
+  escribirClave(AVISOS_KEY, avisos);
 }
 
-// Suma el precio mensual de las pruebas en estado "activa".
-function gastoMensualEnRiesgo(suscripciones) {
-  if (!Array.isArray(suscripciones)) {
-    throw new TypeError('gastoMensualEnRiesgo espera una lista de suscripciones.');
+// Primera carga: tres pruebas ficticias con fechas relativas a hoy.
+function cargarDatosIniciales() {
+  const guardadas = cargarPruebas();
+  if (guardadas !== null) {
+    pruebas = guardadas;
+  } else {
+    const hoy = aISO(fechaDeHoy());
+    const ejemplo = [
+      {
+        servicio: 'Spotify Premium',
+        precioMensual: 19900,
+        fechaFin: sumarDias(hoy, 1),
+        enlaceCancelacion: 'https://spotify.example/cancelar',
+        beneficios: ['Música sin anuncios', 'Descargas sin conexión'],
+      },
+      {
+        servicio: 'YouTube Premium',
+        precioMensual: 24900,
+        fechaFin: sumarDias(hoy, 7),
+        enlaceCancelacion: 'https://youtube.example/cancelar',
+        beneficios: ['Videos sin anuncios', 'Funciona en segundo plano'],
+      },
+      {
+        servicio: 'Amazon Prime',
+        precioMensual: 16900,
+        fechaFin: sumarDias(hoy, 12),
+        enlaceCancelacion: 'https://amazon.example/cancelar',
+        beneficios: ['Envíos gratis', 'Prime Video'],
+      },
+    ];
+    pruebas = ejemplo.map(normalizarPrueba);
+    guardarPruebas();
   }
-
-  return suscripciones
-    .filter((suscripcion) => suscripcion.estado === ESTADOS.ACTIVA)
-    .reduce((total, suscripcion) => total + suscripcion.precioMensual, 0);
+  avisos = cargarAvisos();
 }
 
-/* ---------- Vista (estructura existente en index.html) ---------- */
-
-function crearElemento(etiqueta, texto, clase) {
-  const elemento = document.createElement(etiqueta);
-  if (clase) elemento.className = clase;
-  if (texto !== undefined) elemento.textContent = texto;
-  return elemento;
+function pruebasActivas() {
+  return pruebas.filter((prueba) => prueba.estado === 'activa');
 }
 
-function formatearCOP(valor) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  }).format(valor);
+function buscarPrueba(id) {
+  return pruebas.find((prueba) => prueba.id === id) || null;
 }
 
-// Texto corto de vencimiento que se muestra en cada fila de la lista.
-function etiquetaVencimiento(dias) {
-  if (dias === 1) return 'Termina mañana';
-  if (dias === 0) return 'Termina hoy';
-  if (dias < 0) return `Terminó hace ${Math.abs(dias)} días`;
-  return `Termina en ${dias} días`;
+function totalEnRiesgo() {
+  return pruebasActivas().reduce((total, prueba) => total + prueba.precioMensual, 0);
 }
 
-function renderizarSuscripciones(suscripciones) {
-  const resumen = document.querySelector('.summary');
-  const lista = document.querySelector('.trial-list');
-  if (!resumen || !lista) return;
+/* ---------- Navegación ---------- */
 
-  const activas = suscripciones.filter((suscripcion) => suscripcion.estado === ESTADOS.ACTIVA);
-  const total = gastoMensualEnRiesgo(suscripciones);
-  const plural = activas.length === 1 ? 'prueba activa' : 'pruebas activas';
+const PANTALLAS = ['inicio', 'nueva', 'detalle', 'confirmacion', 'calendario'];
 
-  resumen.replaceChildren(
-    crearElemento('p', 'Gasto mensual en riesgo', 'summary__label'),
-    crearElemento('p', formatearCOP(total), 'summary__amount'),
-    crearElemento('p', `${activas.length} ${plural}`, 'summary__count'),
-  );
+function mostrarPantalla(nombre) {
+  if (!PANTALLAS.includes(nombre)) return;
+  PANTALLAS.forEach((id) => {
+    const section = document.getElementById(`screen-${id}`);
+    if (section) section.hidden = id !== nombre;
+  });
+  document.querySelectorAll('.nav-item').forEach((item) => {
+    item.classList.toggle('is-active', item.dataset.destino === nombre);
+  });
+  window.scrollTo(0, 0);
+}
 
+/* ---------- Pantalla 1: Inicio ---------- */
+
+function etiquetaVencimiento(días) {
+  if (días === 1) return { texto: 'Termina mañana', clase: 'tag--urgente' };
+  if (días === 0) return { texto: 'Termina hoy', clase: 'tag--urgente' };
+  if (días < 0) return { texto: 'Vencida', clase: 'tag--vencida' };
+  return { texto: `Termina en ${días} días`, clase: '' };
+}
+
+function crearTarjeta(prueba) {
+  const li = document.createElement('li');
+  li.className = 'trial-card';
+
+  const principal = document.createElement('button');
+  principal.type = 'button';
+  principal.className = 'trial-card__main';
+  principal.dataset.abrir = prueba.id;
+  principal.setAttribute('aria-label', `Ver detalles de ${prueba.servicio}`);
+
+  const avatar = document.createElement('span');
+  avatar.className = 'trial-card__avatar';
+  avatar.setAttribute('aria-hidden', 'true');
+  avatar.textContent = prueba.servicio.trim().charAt(0).toUpperCase();
+
+  const info = document.createElement('span');
+  info.className = 'trial-card__info';
+  const nombre = document.createElement('span');
+  nombre.className = 'trial-card__name';
+  nombre.textContent = prueba.servicio;
+  const precio = document.createElement('span');
+  precio.className = 'trial-card__price';
+  precio.textContent = `${formatearPeso(prueba.precioMensual)}/mes`;
+  info.append(nombre, precio);
+  principal.append(avatar, info);
+
+  const pie = document.createElement('div');
+  pie.className = 'trial-card__footer';
+  const etiqueta = etiquetaVencimiento(díasRestantes(prueba.fechaFin));
+  const tag = document.createElement('span');
+  tag.className = `tag ${etiqueta.clase}`.trim();
+  tag.textContent = etiqueta.texto;
+
+  const ver = document.createElement('button');
+  ver.type = 'button';
+  ver.className = 'button button--secondary button--small';
+  ver.dataset.abrir = prueba.id;
+  ver.textContent = 'Ver';
+  pie.append(tag, ver);
+
+  li.append(principal, pie);
+  return li;
+}
+
+function renderizarInicio() {
+  const activas = pruebasActivas();
+  document.getElementById('gasto-total').textContent = `${formatearPeso(totalEnRiesgo())} COP`;
+  document.getElementById('gasto-count').textContent =
+    `${activas.length} ${activas.length === 1 ? 'prueba gratuita activa' : 'pruebas gratuitas activas'}`;
+
+  const lista = document.getElementById('lista-pruebas');
   lista.replaceChildren();
+
   if (activas.length === 0) {
-    lista.append(crearElemento('li', 'No hay pruebas activas registradas.', 'empty-state'));
+    const vacio = document.createElement('li');
+    vacio.className = 'empty-state';
+    vacio.textContent = 'No tienes pruebas activas. Agrega una para llevar el control.';
+    const boton = document.createElement('button');
+    boton.type = 'button';
+    boton.className = 'button button--wide';
+    boton.dataset.destino = 'nueva';
+    boton.textContent = 'Agregar prueba';
+    vacio.append(document.createElement('br'), boton);
+    lista.append(vacio);
     return;
   }
 
-  // Las fechas AAAA-MM-DD se ordenan correctamente como texto.
-  const ordenadas = activas.slice().sort((a, b) => a.fechaFin.localeCompare(b.fechaFin));
+  // Orden por proximidad: primero la que vence antes.
+  activas
+    .slice()
+    .sort((a, b) => a.fechaFin.localeCompare(b.fechaFin))
+    .forEach((prueba) => lista.append(crearTarjeta(prueba)));
+}
 
-  ordenadas.forEach((suscripcion, indice) => {
-    const item = crearElemento('li', undefined, 'trial-row');
+/* ---------- Calendario: avisos creados ---------- */
 
-    const info = crearElemento('div', undefined, 'trial-row__info');
-    info.append(
-      crearElemento('h3', suscripcion.servicio, 'trial-row__service'),
-      crearElemento('p', `${formatearCOP(suscripcion.precioMensual)}/mes`, 'trial-row__price'),
-      crearElemento('span', etiquetaVencimiento(diasRestantes(suscripcion)), 'trial-row__label'),
-    );
-
-    const detallesId = `detalles-prueba-${indice}`;
-    const ver = crearElemento('button', 'Ver', 'button button--ver');
-    ver.type = 'button';
-    ver.setAttribute('aria-label', `Ver detalles de ${suscripcion.servicio}`);
-    ver.setAttribute('aria-expanded', 'false');
-    ver.setAttribute('aria-controls', detallesId);
-
-    const detalles = crearElemento('div', undefined, 'trial-row__details');
-    detalles.id = detallesId;
-    detalles.hidden = true;
-
-    const beneficios = crearElemento('ul', undefined, 'trial-row__benefits');
-    suscripcion.beneficios.forEach((beneficio) => {
-      beneficios.append(crearElemento('li', beneficio));
-    });
-
-    const enlace = crearElemento('a', 'Enlace de cancelación', 'trial-row__link');
-    enlace.href = suscripcion.enlaceCancelacion;
-    enlace.target = '_blank';
-    enlace.rel = 'noopener noreferrer';
-
-    detalles.append(
-      crearElemento('p', `Fecha de fin: ${suscripcion.fechaFin}`, 'trial-row__meta'),
-      beneficios,
-      enlace,
-    );
-
-    ver.addEventListener('click', () => {
-      const abierto = ver.getAttribute('aria-expanded') === 'true';
-      ver.setAttribute('aria-expanded', String(!abierto));
-      detalles.hidden = abierto;
-    });
-
-    item.append(info, ver, detalles);
-    lista.append(item);
+function renderizarCalendario() {
+  const lista = document.getElementById('lista-avisos');
+  if (!lista) return;
+  lista.replaceChildren();
+  if (avisos.length === 0) {
+    const vacio = document.createElement('li');
+    vacio.className = 'empty-state';
+    vacio.textContent = 'Todavía no hay avisos creados.';
+    lista.append(vacio);
+    return;
+  }
+  avisos.slice().reverse().forEach((aviso) => {
+    const li = document.createElement('li');
+    const fecha = document.createElement('strong');
+    fecha.textContent = `${formatearFecha(aviso.fechaAviso)} · ${aviso.servicio}`;
+    const detalle = document.createElement('div');
+    detalle.textContent = `Aviso para cancelar antes del ${formatearFecha(aviso.fechaFin)}`;
+    li.append(fecha, detalle);
+    lista.append(li);
   });
 }
 
+/* ---------- Eventos y arranque ---------- */
+
+function abrirDetalle(id) {
+  const prueba = buscarPrueba(id);
+  if (!prueba) return;
+  pruebaActualId = id;
+  mostrarPantalla('detalle');
+}
+
 function iniciar() {
-  renderizarSuscripciones(cargarSuscripcionesIniciales());
+  cargarDatosIniciales();
+  renderizarInicio();
+  renderizarCalendario();
+
+  document.getElementById('btn-agregar').addEventListener('click', () => mostrarPantalla('nueva'));
+
+  document.addEventListener('click', (evento) => {
+    const destino = evento.target.closest('[data-destino]');
+    if (destino) {
+      mostrarPantalla(destino.dataset.destino);
+      return;
+    }
+    const abrir = evento.target.closest('[data-abrir]');
+    if (abrir) abrirDetalle(abrir.dataset.abrir);
+  });
 }
 
-if (typeof document !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', iniciar);
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    STORAGE_KEY,
-    ESTADOS,
-    SUSCRIPCIONES_EJEMPLO,
-    crearSuscripcion,
-    guardarSuscripciones,
-    cargarSuscripciones,
-    cargarSuscripcionesIniciales,
-    diasRestantes,
-    gastoMensualEnRiesgo,
-  };
-}
+document.addEventListener('DOMContentLoaded', iniciar);
