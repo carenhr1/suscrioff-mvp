@@ -342,6 +342,118 @@ function renderizarCalendario() {
   });
 }
 
+/* ---------- Pantalla 2: escaneo y formulario ---------- */
+
+// Extrae fecha, precio, enlace y servicio con expresiones regulares sencillas.
+function detectarDatos(texto) {
+  const resultado = { servicio: '', fechaFin: '', precioMensual: 0, enlaceCancelacion: '' };
+
+  const fechaTexto = /(\d{2}\/\d{2}\/\d{4})/.exec(texto);
+  if (fechaTexto) resultado.fechaFin = fechaDesdeTexto(fechaTexto[1]);
+
+  const precioTexto = /\$\s*([\d.,]+)/.exec(texto);
+  if (precioTexto) {
+    resultado.precioMensual = Number(precioTexto[1].replace(/\./g, '').replace(',', '.')) || 0;
+  }
+
+  const urls = texto.match(/(?:https?:\/\/)?[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/[^\s]*)?/gi) || [];
+  const deCancelacion = urls.find((url) => /cancel/i.test(url));
+  if (deCancelacion) {
+    resultado.enlaceCancelacion = deCancelacion.replace(/[.,;)]+$/, '');
+  }
+
+  const conocido = SERVICIOS_CONOCIDOS.find((servicio) => servicio.patron.test(texto));
+  if (conocido) {
+    resultado.servicio = conocido.nombre;
+    if (!resultado.enlaceCancelacion) resultado.enlaceCancelacion = conocido.enlace;
+  }
+
+  return resultado;
+}
+
+function camposFormulario() {
+  return {
+    texto: document.getElementById('texto-escaneo'),
+    servicio: document.getElementById('campo-servicio'),
+    fecha: document.getElementById('campo-fecha'),
+    precio: document.getElementById('campo-precio'),
+    enlace: document.getElementById('campo-enlace'),
+    mensaje: document.getElementById('mensaje-escaneo'),
+    error: document.getElementById('error-formulario'),
+  };
+}
+
+function habilitarCampos(habilitados, enfocar) {
+  const campos = camposFormulario();
+  [campos.servicio, campos.fecha, campos.precio, campos.enlace].forEach((campo) => {
+    campo.disabled = !habilitados;
+  });
+  if (enfocar && habilitados) campos.servicio.focus();
+}
+
+function escanearTexto() {
+  const campos = camposFormulario();
+  const detectado = detectarDatos(campos.texto.value);
+
+  campos.servicio.value = detectado.servicio;
+  campos.fecha.value = detectado.fechaFin ? formatearFecha(detectado.fechaFin) : '';
+  campos.precio.value = detectado.precioMensual
+    ? `${formatearPeso(detectado.precioMensual)} COP / mes`
+    : '';
+  campos.enlace.value = detectado.enlaceCancelacion;
+  campos.error.hidden = true;
+
+  const sinDatos = !detectado.servicio && !detectado.fechaFin && !detectado.precioMensual;
+  campos.mensaje.hidden = !sinDatos;
+  campos.mensaje.textContent = sinDatos
+    ? 'No pudimos detectar los datos, complétalos manualmente'
+    : '';
+  if (sinDatos) habilitarCampos(true, true);
+}
+
+function precioDesdeCampo(valor) {
+  const numero = /[\d.,]+/.exec(valor || '');
+  if (!numero) return 0;
+  return Number(numero[0].replace(/\./g, '').replace(',', '.')) || 0;
+}
+
+function guardarNuevaPrueba() {
+  const campos = camposFormulario();
+  const servicio = campos.servicio.value.trim();
+  const fechaFin = fechaDesdeTexto(campos.fecha.value);
+  const errores = [];
+
+  if (!servicio) errores.push('Escribe el servicio.');
+  if (!fechaFin) errores.push('Escribe una fecha de fin válida (dd/mm/aaaa).');
+
+  if (errores.length) {
+    campos.error.textContent = errores.join('\n');
+    campos.error.hidden = false;
+    return;
+  }
+
+  let enlace = campos.enlace.value.trim();
+  if (enlace && !/^https?:\/\//i.test(enlace)) enlace = `https://${enlace}`;
+
+  const prueba = normalizarPrueba({
+    servicio,
+    fechaFin,
+    precioMensual: precioDesdeCampo(campos.precio.value),
+    enlaceCancelacion: enlace,
+  });
+  pruebas.push(prueba);
+  guardarPruebas();
+
+  campos.texto.value = '';
+  [campos.servicio, campos.fecha, campos.precio, campos.enlace].forEach((campo) => {
+    campo.value = '';
+    campo.disabled = true;
+  });
+  campos.error.hidden = true;
+  campos.mensaje.hidden = true;
+  abrirDetalle(prueba.id);
+}
+
 /* ---------- Eventos y arranque ---------- */
 
 function abrirDetalle(id) {
@@ -357,6 +469,10 @@ function iniciar() {
   renderizarCalendario();
 
   document.getElementById('btn-agregar').addEventListener('click', () => mostrarPantalla('nueva'));
+  document.getElementById('btn-escanear').addEventListener('click', escanearTexto);
+  document.getElementById('btn-editar').addEventListener('click', () => habilitarCampos(true, true));
+  document.getElementById('btn-guardar').addEventListener('click', guardarNuevaPrueba);
+  document.getElementById('formulario-nueva').addEventListener('submit', (evento) => evento.preventDefault());
 
   document.addEventListener('click', (evento) => {
     const destino = evento.target.closest('[data-destino]');

@@ -38,7 +38,49 @@
     </section>
 
     <!-- Pantalla 2: Nueva prueba gratuita -->
-    <section id="screen-nueva" class="screen" aria-labelledby="titulo-nueva" hidden></section>
+    <section id="screen-nueva" class="screen" aria-labelledby="titulo-nueva" hidden>
+      <header class="screen-header">
+        <span class="screen-number" aria-hidden="true">2</span>
+        <h1 class="screen-title" id="titulo-nueva">Nueva prueba gratuita</h1>
+      </header>
+      <div class="screen-body">
+        <form id="formulario-nueva" novalidate>
+          <label class="block-label" for="texto-escaneo">Pega el enlace o el correo</label>
+          <textarea id="texto-escaneo" rows="6" placeholder="Tu prueba de YouTube Premium termina el 27/11/2026. Luego pagarás $24.900 al mes. Cancela en youtube.example/cancelar"></textarea>
+          <button id="btn-escanear" class="button button--wide" type="button">Escanear texto o enlace</button>
+          <p id="mensaje-escaneo" class="scan-message" role="status" hidden></p>
+
+          <hr class="separator">
+          <h2 class="section-title section-title--compact">Datos detectados (editables)</h2>
+
+          <div class="campos">
+            <div class="field">
+              <label for="campo-servicio">Servicio</label>
+              <input id="campo-servicio" type="text" autocomplete="off" disabled>
+            </div>
+            <div class="field">
+              <label for="campo-fecha">Fin de la prueba</label>
+              <input id="campo-fecha" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" autocomplete="off" disabled>
+            </div>
+            <div class="field">
+              <label for="campo-precio">Precio después</label>
+              <input id="campo-precio" type="text" placeholder="$ 24.900 COP / mes" autocomplete="off" disabled>
+            </div>
+            <div class="field field--wide">
+              <label for="campo-enlace">Enlace para cancelar</label>
+              <input id="campo-enlace" type="text" autocomplete="off" disabled>
+            </div>
+          </div>
+
+          <p id="error-formulario" class="form-error" role="alert" hidden></p>
+
+          <div class="button-row">
+            <button id="btn-editar" class="button button--secondary" type="button">Editar</button>
+            <button id="btn-guardar" class="button" type="button">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </section>
 
     <!-- Pantalla 3: Detalle -->
     <section id="screen-detalle" class="screen" aria-labelledby="titulo-detalle" hidden></section>

@@ -280,6 +280,97 @@ button:disabled {
   font-size: 14px;
 }
 
+/* Pantalla 2 — escaneo y campos */
+.block-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--navy);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+#texto-escaneo {
+  display: block;
+  width: 100%;
+  min-height: 138px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 2px dashed var(--navy);
+  background: var(--white);
+  color: var(--navy);
+  font-size: 14px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+#texto-escaneo::placeholder {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.separator {
+  height: 0;
+  margin: 24px 0 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+.section-title--compact {
+  margin-top: 16px;
+}
+
+.scan-message {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.campos {
+  display: grid;
+  gap: 14px;
+}
+
+.field--wide {
+  grid-column: 1 / -1;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.field input {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  background: var(--field);
+  color: var(--navy);
+  font-size: 14px;
+}
+
+.field input:disabled {
+  opacity: 1;
+  color: var(--navy);
+}
+
+.form-error {
+  margin: 14px 0 0;
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: pre-line;
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 /* Barra inferior fija dentro del marco */
 .bottom-nav {
   display: grid;
